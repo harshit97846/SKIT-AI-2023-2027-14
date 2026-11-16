@@ -16,7 +16,7 @@ const Register = lazy(() => import("./pages/Register"));
 
 const App = () => (
     <BrowserRouter>
-        <Suspense fallback={<div className="app-loading" role="status">Loading CVD-XAI…</div>}>
+        <Suspense fallback={<div className="app-loading" role="status">Loading Hridaya Rakshak AI…</div>}>
             <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />

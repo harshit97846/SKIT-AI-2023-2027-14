@@ -1,4 +1,5 @@
 import React from "react";
+import { HridayaShieldIcon } from "./HridayaLogo";
 
 const displayValue = (value, unit = "") => {
     if (value === null || value === undefined || value === "") return "Not recorded";
@@ -31,11 +32,11 @@ const ClinicalReportPrintDocument = ({ patient, currentUser, latestClinical, lat
         <div id="clinical-report-printable-area" className="clinical-print-document">
             <div className="print-header">
                 <div className="print-header-left">
-                    <div className="print-institution-logo" aria-hidden="true">♥</div>
+                    <HridayaShieldIcon size={38} />
                     <div>
-                        <h1 className="print-institution-name">CVD-XAI</h1>
-                        <p className="print-institution-dept">Clinical decision support summary</p>
-                        <p className="print-institution-sub">Generated from the data currently available in this account</p>
+                        <h1 className="print-institution-name">Hridaya Rakshak AI</h1>
+                        <p className="print-institution-dept">Cardiovascular Clinical Intelligence Platform</p>
+                        <p className="print-institution-sub">Generated from the patient measurements and electrophysiological data</p>
                     </div>
                 </div>
                 <div className="print-header-right">
@@ -129,7 +130,7 @@ const ClinicalReportPrintDocument = ({ patient, currentUser, latestClinical, lat
             </section>
 
             <div className="print-disclaimer">
-                This summary presents measurements and model output available in CVD-XAI at the time it was generated. It is not a diagnosis or treatment recommendation. A qualified clinician should review the source data and determine any next steps.
+                This summary presents measurements and model output available in Hridaya Rakshak AI at the time it was generated. It is not a diagnosis or treatment recommendation. A qualified clinician should review the source data and determine any next steps.
             </div>
         </div>
     );

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../services/authService";
+import { HridayaShieldIcon } from "../components/HridayaLogo";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -63,11 +64,13 @@ const Register = () => {
     return (
         <div className="auth-page">
             <div className="auth-card">
-                <div className="auth-logo">♥</div>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
+                    <HridayaShieldIcon size={56} />
+                </div>
 
                 <div className="auth-header">
                     <h1>Create Account</h1>
-                    <p>Register for the CVD-XAI clinical system</p>
+                    <p>Register for Hridaya Rakshak AI clinical system</p>
                 </div>
 
                 {error && <div className="form-error">⚠ {error}</div>}

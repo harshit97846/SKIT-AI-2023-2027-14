@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 const SLIDES = [
     {
         badge: "CARDIOVASCULAR WORKSPACE",
-        title: "Welcome to the CVD-XAI platform",
+        title: "Welcome to Hridaya Rakshak AI platform",
         subtitle: "Clinical measurements and ECG review in one workspace",
         description:
             "Review patient records, submit clinical measurements, and manage ECG uploads. Available results depend on the data and services connected to this deployment.",

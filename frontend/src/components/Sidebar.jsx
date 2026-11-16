@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { getStoredUser } from "../services/authService";
+import { HridayaShieldIcon } from "./HridayaLogo";
 
 const ROLE_NAV = {
     patient: {
@@ -82,9 +83,9 @@ const Sidebar = ({ isOpen = true, onClose }) => {
                 </nav>
 
                 <div className="sidebar-info">
-                    <div className="sidebar-info-icon">♥</div>
+                    <HridayaShieldIcon size={32} />
                     <div>
-                        <strong>CVD-XAI</strong>
+                        <strong>Hridaya Rakshak AI</strong>
                         <small>{roleConfig.badge} Active</small>
                     </div>
                 </div>

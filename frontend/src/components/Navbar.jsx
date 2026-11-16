@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { HridayaShieldIcon } from "./HridayaLogo";
 
 const Navbar = ({ user, onMenuClick, onLogout }) => {
     const [notifications, setNotifications] = useState(0);
@@ -38,11 +39,11 @@ const Navbar = ({ user, onMenuClick, onLogout }) => {
                     ☰
                 </button>
 
-                <div className="logo-icon">♥</div>
+                <HridayaShieldIcon size={38} />
 
                 <div>
-                    <h2>CVD-XAI</h2>
-                    <span>Clinical Intelligence</span>
+                    <h2>Hridaya Rakshak AI</h2>
+                    <span>Cardiovascular Intelligence</span>
                 </div>
             </div>
 

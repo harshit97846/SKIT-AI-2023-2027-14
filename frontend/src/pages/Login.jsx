@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getStoredUser, isAuthenticated, login } from "../services/authService";
+import { HridayaShieldIcon } from "../components/HridayaLogo";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -55,11 +56,13 @@ const Login = () => {
     return (
         <div className="auth-page">
             <div className="auth-card">
-                <div className="auth-logo">♥</div>
+                <div style={{ display: "flex", justifyContent: "center", marginBottom: "16px" }}>
+                    <HridayaShieldIcon size={56} />
+                </div>
 
                 <div className="auth-header">
-                    <h1>Welcome Back</h1>
-                    <p>Sign in to your CVD-XAI account</p>
+                    <h1>Hridaya Rakshak AI</h1>
+                    <p>Sign in to your clinical account</p>
                 </div>
 
                 {message && <div className="form-success">✓ {message}</div>}

@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
 
     # ── Application ──────────────────────────────────────────────
-    APP_NAME: str = "CardioXAI API"
+    APP_NAME: str = "Hridaya Rakshak AI API"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
 

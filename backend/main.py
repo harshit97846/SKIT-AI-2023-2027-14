@@ -1,5 +1,5 @@
 """
-CardioXAI — FastAPI Backend Server
+Hridaya Rakshak AI — FastAPI Backend Server
 
 Sprint 1(A): Basic server setup and project structure.
 Sprint 1(B): JWT authentication and security.

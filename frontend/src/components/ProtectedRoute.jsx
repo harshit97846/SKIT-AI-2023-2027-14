@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { getCurrentUser, getStoredUser, isAuthenticated } from "../services/authService";
+import { HridayaShieldIcon } from "./HridayaLogo";
 
 const ProtectedRoute = ({ children }) => {
     const location = useLocation();
@@ -54,9 +55,11 @@ const ProtectedRoute = ({ children }) => {
         return (
             <div className="auth-page">
                 <div className="auth-card auth-loading-card">
-                    <div className="auth-logo">♥</div>
+                    <div style={{ display: "flex", justifyContent: "center", marginBottom: "12px" }}>
+                        <HridayaShieldIcon size={46} />
+                    </div>
                     <h2>Checking secure session</h2>
-                    <p>Please wait while your CVD-XAI session is verified.</p>
+                    <p>Please wait while your Hridaya Rakshak AI session is verified.</p>
                 </div>
             </div>
         );

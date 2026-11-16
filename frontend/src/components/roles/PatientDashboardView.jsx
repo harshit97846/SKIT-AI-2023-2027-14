@@ -256,7 +256,7 @@ const PatientDashboardView = ({ patient, currentUser, activeView = "dashboard" }
                                         ? `Stored model result: ${riskStatusLabel}`
                                         : latestClinical
                                         ? "Clinical Vitals Recorded — Assessment Ready"
-                                        : "Welcome to CardioXAI — Please Record Your Clinical Vitals"}
+                                        : "Welcome to Hridaya Rakshak AI — Please Record Your Clinical Vitals"}
                                 </strong>
                                 <p>
                                     {latestPrediction

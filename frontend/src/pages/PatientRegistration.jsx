@@ -399,7 +399,7 @@ const PatientRegistration = () => {
             <div className="page-header">
                 <div>
                     <span className="welcome-label">
-                        CVD-XAI CLINICAL SYSTEM
+                        HRIDAYA RAKSHAK AI CLINICAL SYSTEM
                     </span>
 
                     <h1>Patient Registration</h1>
