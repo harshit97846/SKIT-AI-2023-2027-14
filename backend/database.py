@@ -23,6 +23,7 @@ client: MongoClient = MongoClient(
     serverSelectionTimeoutMS=5000,
     tls=True,
     tlsCAFile=_ca_file,
+    connect=False,
 )
 database: Database = client[settings.MONGODB_DB_NAME]
 
