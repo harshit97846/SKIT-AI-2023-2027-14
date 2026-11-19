@@ -207,15 +207,21 @@ def delete_clinical_record(
 @router.post("/ecg", status_code=status.HTTP_201_CREATED)
 async def upload_ecg(
     file: UploadFile = File(...),
-    sampling_rate_hz: int = Form(default=500),
-    lead_count: int = Form(default=1),
-    duration_seconds: Optional[float] = Form(default=None),
+    sampling_rate_hz: int = Form(default=500, ge=100, le=2000),
+    lead_count: int = Form(default=12, ge=1, le=12),
+    duration_seconds: Optional[float] = Form(default=None, gt=0, le=3600),
     user: dict = Depends(require_role(UserRole.patient, UserRole.doctor, UserRole.clinician, UserRole.lab_technician)),
     db: Database = Depends(get_db),
 ) -> dict:
     """Upload an ECG signal file (CSV, TXT, DAT, HEA, PDF, or image)."""
     original_name = Path(file.filename or "ecg_upload").name
     suffix = Path(original_name).suffix.lower()
+
+    if lead_count not in {1, 3, 6, 12}:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Lead count must be 1, 3, 6, or 12.",
+        )
 
     if suffix not in ECG_ALLOWED_EXTENSIONS:
         raise HTTPException(
