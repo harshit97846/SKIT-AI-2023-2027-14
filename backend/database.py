@@ -1,6 +1,6 @@
 from pymongo import MongoClient
 from pymongo.database import Database
-from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
+from pymongo.errors import ConfigurationError, ConnectionFailure, ServerSelectionTimeoutError
 
 from config import settings
 
@@ -50,7 +50,7 @@ def ping_db() -> dict:
             "database": settings.MONGODB_DB_NAME,
             "latency_ms": latency,
         }
-    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+    except (ConfigurationError, ConnectionFailure, ServerSelectionTimeoutError) as exc:
         return {
             "connected": False,
             "database": settings.MONGODB_DB_NAME,
@@ -62,7 +62,7 @@ def verify_connection() -> None:
     """Verify MongoDB is reachable. Called on startup — fails fast if not."""
     try:
         client.admin.command("ping")
-    except (ConnectionFailure, ServerSelectionTimeoutError) as exc:
+    except (ConfigurationError, ConnectionFailure, ServerSelectionTimeoutError) as exc:
         raise RuntimeError(
             f"Cannot connect to MongoDB at startup.\n"
             f"  URI: {settings.MONGODB_URI[:30]}...\n"
