@@ -11,6 +11,8 @@ were tested, not the actual query logic that runs against them.
 
 import mongomock
 import pytest
+from pymongo.errors import ConfigurationError
+from types import SimpleNamespace
 
 import database as db_module
 
@@ -114,6 +116,29 @@ class TestGetCollectionStats:
             "prediction_results",
         }
         assert set(stats.keys()) == expected_collections
+
+
+class TestMongoConnectionErrors:
+    def test_ping_reports_srv_dns_configuration_error(self, monkeypatch):
+        def fail_ping(*_args, **_kwargs):
+            raise ConfigurationError("SRV lookup failed")
+
+        monkeypatch.setattr(db_module, "client", SimpleNamespace(admin=SimpleNamespace(command=fail_ping)))
+
+        result = db_module.ping_db()
+
+        assert result["connected"] is False
+        assert result["database"] == db_module.settings.MONGODB_DB_NAME
+        assert "SRV lookup failed" in result["error"]
+
+    def test_startup_connection_wraps_srv_dns_configuration_error(self, monkeypatch):
+        def fail_ping(*_args, **_kwargs):
+            raise ConfigurationError("SRV lookup failed")
+
+        monkeypatch.setattr(db_module, "client", SimpleNamespace(admin=SimpleNamespace(command=fail_ping)))
+
+        with pytest.raises(RuntimeError, match="Cannot connect to MongoDB at startup"):
+            db_module.verify_connection()
 
 
 class TestGetPatientByIdentifier:
