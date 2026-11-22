@@ -59,11 +59,22 @@ const AiReport = ({ patient, testData }) => {
 
                     <section className="ai-report-block">
                         <h3>Model Explanation</h3>
-                        <p>
-                            {report.topFeatureDirection
-                                ? <>The strongest available stored attribution is <strong>{report.topFeature}</strong>, with a {report.topFeatureDirection} impact.</>
-                                : report.topFeature}
-                        </p>
+                            {report.features.length > 0 ? (
+                                <ol className="ai-report-feature-list">
+                                    {report.features.slice(0, 5).map((feature, index) => (
+                                        <li key={`${feature.name}-${index}`}>
+                                            <strong>{feature.name}</strong>
+                                            <span>
+                                                {feature.impact === null
+                                                    ? feature.direction
+                                                    : `${feature.direction} (${feature.impact > 0 ? "+" : ""}${feature.impact.toFixed(3)})`}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ol>
+                            ) : (
+                                <p>No stored feature attribution is available for this assessment.</p>
+                            )}
                     </section>
 
                     <section className="ai-report-block">
