@@ -1,38 +1,10 @@
 import React, { useMemo } from "react";
 import { printClinicalReport } from "../utils/printReport";
+import { buildAiReportData } from "../utils/aiReport";
 
 const AiReport = ({ patient, testData }) => {
-    const report = useMemo(() => {
-        const assessment = testData?.assessment || {};
-        const metrics = testData?.clinicalMetrics || {};
-        const features = testData?.explainability?.topFeatures || [];
-        const ecg = testData?.ecg || {};
-        const risk = patient?.riskLevel || patient?.risk_level || assessment.prediction || "Pending assessment";
-        const rawScore = assessment.riskScore !== undefined && assessment.riskScore !== null
-            ? Number(assessment.riskScore)
-            : Number(patient?.risk_score) * 100;
-        const score = Number.isFinite(rawScore)
-            ? `${Math.round(rawScore)}%`
-            : "—";
-        const topFeature = [...features].sort(
-            (a, b) => Math.abs(Number(b.contribution) || 0) - Math.abs(Number(a.contribution) || 0)
-        )[0];
-
-        return {
-            risk,
-            score,
-            model: assessment.model || patient?.model_name || "Model name unavailable",
-            topFeature: topFeature?.feature || "No stored feature attribution available",
-            topFeatureDirection: topFeature?.direction || "",
-            heartRate: metrics.averageHeartRate ?? patient?.heartRate ?? patient?.heart_rate ?? "—",
-            cholesterol: metrics.averageCholesterol ?? patient?.cholesterol ?? "—",
-            bloodPressure:
-                metrics.averageSystolicBP && metrics.averageDiastolicBP
-                    ? `${metrics.averageSystolicBP}/${metrics.averageDiastolicBP}`
-                    : patient?.bloodPressure || patient?.blood_pressure || "—",
-            rhythm: ecg.rhythm || "—",
-        };
-    }, [patient, testData]);
+    const report = useMemo(() => buildAiReportData(patient, testData), [patient, testData]);
+    const score = report.scorePercent === null ? "—" : `${report.scorePercent}%`;
 
     return (
         <div className="dashboard-section ai-report-section">
@@ -51,19 +23,27 @@ const AiReport = ({ patient, testData }) => {
                 <div className="ai-report-header">
                     <div>
                         <span>Patient</span>
-                        <strong>{patient?.name || testData?.patient?.patientName || "No patient selected"}</strong>
+                            <strong>{report.patientName}</strong>
                     </div>
                     <div>
                         <span>Patient ID</span>
-                        <strong>{patient?.patientId || patient?.patient_id || testData?.patient?.patientId || "—"}</strong>
+                            <strong>{report.patientId}</strong>
                     </div>
+                        <div>
+                            <span>Age / Sex</span>
+                            <strong>{report.age} / {report.sex}</strong>
+                        </div>
                     <div>
                         <span>Assessment</span>
-                        <strong>{report.risk}</strong>
+                            <strong>{report.risk}</strong>
                     </div>
                     <div>
                         <span>Risk Score</span>
-                        <strong>{report.score}</strong>
+                            <strong>{score}</strong>
+                        </div>
+                        <div>
+                            <span>Model</span>
+                            <strong>{report.model}</strong>
                     </div>
                 </div>
 
@@ -71,8 +51,8 @@ const AiReport = ({ patient, testData }) => {
                     <section className="ai-report-block">
                         <h3>Clinical Summary</h3>
                         <p>
-                            {report.score !== "—"
-                                ? <>The stored model result is <strong>{report.risk}</strong> ({report.score}) from the {report.model}. Review it alongside the source measurements: heart rate <strong>{report.heartRate} BPM</strong>, cholesterol <strong>{report.cholesterol} mg/dL</strong>, and blood pressure <strong>{report.bloodPressure} mmHg</strong>.</>
+                            {score !== "—"
+                                ? <>The stored model result is <strong>{report.risk}</strong> ({score}) from the {report.model}. Review it alongside the recorded measurements: heart rate <strong>{report.heartRate} BPM</strong>, cholesterol <strong>{report.cholesterol} mg/dL</strong>, and blood pressure <strong>{report.bloodPressure} mmHg</strong>.</>
                                 : "No model assessment is stored for this patient. Complete an assessment and verify the source data before generating a clinical summary."}
                         </p>
                     </section>
@@ -91,7 +71,7 @@ const AiReport = ({ patient, testData }) => {
                         <p>
                             {report.rhythm !== "—"
                                 ? <>The attached ECG result reports a rhythm of <strong>{report.rhythm}</strong>.</>
-                                : "No ECG result is attached to this assessment."}
+                                : report.ecgStatus}
                         </p>
                     </section>
 
