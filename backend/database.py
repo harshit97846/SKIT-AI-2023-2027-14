@@ -463,3 +463,103 @@ def get_global_feature_importance(
         item["importance_rank"] = idx
 
     return ranked[:limit]
+
+
+def serialize_object_id(val: Any) -> Any:
+    """Recursively convert BSON ObjectId and datetime to JSON-serializable primitives.
+
+    Fixes FastAPI / Pydantic serialization errors when returning raw MongoDB documents.
+    """
+    from bson import ObjectId
+    from datetime import datetime, date
+
+    if isinstance(val, ObjectId):
+        return str(val)
+    elif isinstance(val, (datetime, date)):
+        return val.isoformat()
+    elif isinstance(val, dict):
+        return {k: serialize_object_id(v) for k, v in val.items()}
+    elif isinstance(val, (list, tuple, set)):
+        return [serialize_object_id(item) for item in val]
+    return val
+
+
+def normalize_mongo_doc(
+    doc: dict | None,
+    id_field: str = "id",
+    keep_raw_id: bool = False,
+) -> dict | None:
+    """Normalize a MongoDB document for API responses.
+
+    Converts `_id` (ObjectId) to string `id` (or `id_field`), converts nested
+    ObjectIds/datetimes to ISO strings, and optionally strips the leading underscore `_id`.
+    """
+    if doc is None:
+        return None
+
+    cleaned = serialize_object_id(doc)
+    if "_id" in cleaned:
+        raw_id_str = str(cleaned["_id"])
+        if id_field:
+            cleaned[id_field] = raw_id_str
+        if not keep_raw_id and id_field != "_id":
+            del cleaned["_id"]
+    return cleaned
+
+
+def normalize_mongo_cursor(
+    cursor: Any,
+    id_field: str = "id",
+    keep_raw_id: bool = False,
+) -> list[dict]:
+    """Iterate and normalize all documents from a cursor or list."""
+    return [
+        normalize_mongo_doc(doc, id_field=id_field, keep_raw_id=keep_raw_id)
+        for doc in cursor
+        if doc is not None
+    ]
+
+
+def safe_find_one(
+    collection_name: str,
+    query: dict,
+    projection: dict | None = None,
+    normalize: bool = True,
+    db: Database | None = None,
+) -> dict | None:
+    """Execute find_one with automatic retry on transient failure and optional doc normalization."""
+    target_db = db if db is not None else database
+
+    @with_db_retry(max_retries=3)
+    def _run():
+        return target_db[collection_name].find_one(query, projection)
+
+    doc = _run()
+    return normalize_mongo_doc(doc) if normalize else doc
+
+
+def safe_find(
+    collection_name: str,
+    query: dict | None = None,
+    projection: dict | None = None,
+    limit: int = 0,
+    sort: list | None = None,
+    normalize: bool = True,
+    db: Database | None = None,
+) -> list[dict]:
+    """Execute find with automatic retry and optional normalization."""
+    target_db = db if db is not None else database
+    q = query if query is not None else {}
+
+    @with_db_retry(max_retries=3)
+    def _run():
+        cursor = target_db[collection_name].find(q, projection)
+        if sort:
+            cursor = cursor.sort(sort)
+        if limit > 0:
+            cursor = cursor.limit(limit)
+        return list(cursor)
+
+    docs = _run()
+    return normalize_mongo_cursor(docs) if normalize else docs
+
