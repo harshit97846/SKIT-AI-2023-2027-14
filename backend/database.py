@@ -43,6 +43,7 @@ def with_db_retry(
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             delay = base_delay
             last_err = None
+            fn_name = getattr(func, "__name__", repr(func))
             for attempt in range(1, max_retries + 1):
                 try:
                     return func(*args, **kwargs)
@@ -51,7 +52,7 @@ def with_db_retry(
                     if attempt == max_retries:
                         logger.error(
                             "Database operation '%s' failed after %d attempts: %s",
-                            func.__name__,
+                            fn_name,
                             attempt,
                             exc,
                         )
@@ -60,7 +61,7 @@ def with_db_retry(
                     sleep_time = delay * jitter
                     logger.warning(
                         "Transient DB error in '%s' (attempt %d/%d): %s. Retrying in %.2fs...",
-                        func.__name__,
+                        fn_name,
                         attempt,
                         max_retries,
                         exc,
