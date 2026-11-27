@@ -1,8 +1,90 @@
+import functools
+import logging
+import random
+import time
+from typing import Any, Callable, TypeVar
+
 from pymongo import MongoClient
 from pymongo.database import Database
-from pymongo.errors import ConfigurationError, ConnectionFailure, ServerSelectionTimeoutError
+from pymongo.errors import (
+    AutoReconnect,
+    ConfigurationError,
+    ConnectionFailure,
+    NetworkTimeout,
+    ServerSelectionTimeoutError,
+)
 
 from config import settings
+
+logger = logging.getLogger("cvd_xai.database")
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+RETRYABLE_EXCEPTIONS = (
+    AutoReconnect,
+    ConnectionFailure,
+    ServerSelectionTimeoutError,
+    NetworkTimeout,
+)
+
+
+def with_db_retry(
+    max_retries: int = 3,
+    base_delay: float = 0.25,
+    backoff_factor: float = 2.0,
+    exceptions: tuple = RETRYABLE_EXCEPTIONS,
+) -> Callable[[F], F]:
+    """Decorator to retry MongoDB operations upon transient network/server failures.
+
+    Applies exponential backoff with random jitter to prevent thundering herd.
+    """
+    def decorator(func: F) -> F:
+        @functools.wraps(func)
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            delay = base_delay
+            last_err = None
+            for attempt in range(1, max_retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except exceptions as exc:
+                    last_err = exc
+                    if attempt == max_retries:
+                        logger.error(
+                            "Database operation '%s' failed after %d attempts: %s",
+                            func.__name__,
+                            attempt,
+                            exc,
+                        )
+                        raise
+                    jitter = random.uniform(0.8, 1.2)
+                    sleep_time = delay * jitter
+                    logger.warning(
+                        "Transient DB error in '%s' (attempt %d/%d): %s. Retrying in %.2fs...",
+                        func.__name__,
+                        attempt,
+                        max_retries,
+                        exc,
+                        sleep_time,
+                    )
+                    time.sleep(sleep_time)
+                    delay *= backoff_factor
+            if last_err:
+                raise last_err
+        return wrapper  # type: ignore
+    return decorator
+
+
+def execute_with_retry(
+    func: Callable[..., Any],
+    *args: Any,
+    max_retries: int = 3,
+    base_delay: float = 0.25,
+    **kwargs: Any,
+) -> Any:
+    """Execute a database callable with automatic retry on transient connection failures."""
+    decorated = with_db_retry(max_retries=max_retries, base_delay=base_delay)(func)
+    return decorated(*args, **kwargs)
+
 
 
 
@@ -69,6 +151,70 @@ def verify_connection() -> None:
             f"  Error: {exc}\n"
             f"  → Check your .env file and network connection."
         ) from exc
+
+
+def ping_db_resilient(max_retries: int = 2) -> dict:
+    """Ping MongoDB with automatic retry on transient network glitch.
+
+    Useful for healthcheck endpoints to prevent flapping during minor DNS/network blips.
+    """
+    def _ping():
+        start = time.perf_counter()
+        client.admin.command("ping")
+        return round((time.perf_counter() - start) * 1000, 2)
+
+    try:
+        latency = execute_with_retry(_ping, max_retries=max_retries, base_delay=0.2)
+        return {
+            "connected": True,
+            "database": settings.MONGODB_DB_NAME,
+            "latency_ms": latency,
+            "resilient": True,
+        }
+    except Exception as exc:
+        return {
+            "connected": False,
+            "database": settings.MONGODB_DB_NAME,
+            "error": str(exc),
+            "resilient": True,
+        }
+
+
+def check_connection_health(db: Database | None = None) -> dict:
+    """Run an end-to-end diagnostic check on the database connection and core collections.
+
+    Returns overall status, latency, collection existence, and writable check.
+    """
+    target_db = db if db is not None else database
+    result = {
+        "ok": False,
+        "database": target_db.name,
+        "collections": [],
+        "latency_ms": None,
+        "writable": False,
+    }
+    start = time.perf_counter()
+    try:
+        # Check command ping
+        client.admin.command("ping")
+        result["latency_ms"] = round((time.perf_counter() - start) * 1000, 2)
+        
+        # Check collection listing
+        colls = target_db.list_collection_names()
+        result["collections"] = colls
+        
+        # Test dry write / read capability in temporary collection or probe
+        probe_coll = target_db["_connection_probe"]
+        probe_id = probe_coll.insert_one({"probe": True, "ts": time.time()}).inserted_id
+        probe_coll.delete_one({"_id": probe_id})
+        result["writable"] = True
+        result["ok"] = True
+    except Exception as exc:
+        result["error"] = str(exc)
+        logger.warning("Connection healthcheck failed: %s", exc)
+
+    return result
+
 
 
 def init_indexes() -> None:
