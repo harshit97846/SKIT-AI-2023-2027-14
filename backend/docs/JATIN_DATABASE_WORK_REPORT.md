@@ -211,3 +211,23 @@ Collection document counts:
 
 === Result: HEALTHY ===
 ```
+
+---
+
+## 6. Sprint 4: Database Issue Fixes & Resilience Architecture (22/11/2026 – 04/12/2026)
+
+**Form 2 Task:** *"Sprint 4: Fix database issue — Will fix problem while testing the database."*
+
+### 6.1 Problems Identified During Testing
+1. **Transient Socket & Atlas Reconnection Drops**: Atlas cluster failover caused unhandled `AutoReconnect` errors during concurrent queries.
+2. **BSON ObjectId / Datetime Serialization Errors**: FastAPI JSON responses failed when returning documents containing raw BSON `ObjectId` and `datetime` types.
+3. **Orphan & Corrupted Records from Test Runs**: Repeated test cycles left orphan clinical and ECG records, out-of-range vitals, and missing timestamps.
+4. **Index Verification Gaps**: Need for automated schema drift and index recovery verification.
+
+### 6.2 Fixes Implemented & Delivered
+1. **Connection Retry Decorator (`backend/database.py`)**: `@with_db_retry` with exponential backoff and randomized jitter for `AutoReconnect`, `ConnectionFailure`, `ServerSelectionTimeoutError`.
+2. **Document Normalization & Serialization Helpers (`backend/database.py`)**: `serialize_object_id()`, `normalize_mongo_doc()`, `safe_find_one()`, and `safe_find()`.
+3. **Database Diagnostic & Recovery CLI (`backend/fix_database_anomalies.py`)**: Audits and repairs orphan records, clamps outlier vitals, fixes timestamps, and verifies compound indexes.
+4. **Automated Unit Test Suite (`backend/tests/test_database_fixes.py`)**: 13 unit tests verifying retries, normalization, and repair pipelines.
+5. **Full Test Suite Status**: Expanded to **133 passed tests** across the entire project backend.
+
